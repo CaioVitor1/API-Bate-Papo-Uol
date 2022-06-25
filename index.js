@@ -30,11 +30,20 @@ const messagesSchema = joi.object({
     to : joi.
 })*/
 
-app.post('/participants', async (req, res) => {   //falta usar o joy e days aqui
+
+
+app.post('/participants', async (req, res) => {
+    function verificandoNome(valor) {
+        if(valor.length !== 0) {
+            res.sendStatus(409)
+            return
+        }
+    }
     const {name} = req.body;
     console.log(name)
     const promise = db.collection("participants").find({name}).toArray();
-/*Verificar se ainda existe usuário com esse nome presente */
+      promise.then((valor) => verificandoNome(valor));
+
 
     const validation = participantsSchema.validate(req.body, {abortEarly: true})
     if(validation.error){
@@ -85,7 +94,6 @@ app.post('/messages', async(req,res) => {
 app.get('/messages', async(req,res) => {
     const limit = parseInt(req.query.limit);
     const user = req.headers.user;
-    console.log(user)
     const messagesPublic = await db.collection('message').find({to: { $in: [ "Todos", user ] }}).limit(limit).toArray();
     try{
         res.send(messagesPublic)
