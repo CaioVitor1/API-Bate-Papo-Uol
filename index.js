@@ -101,7 +101,25 @@ app.get('/messages', async(req,res) => {
         res.sendStatus(500);
     }
 })
- 
+app.post('/status', async(req,res) => {
+    const {user} = req.headers
+     
+    try{
+        const newUser = await db.collection("participants").findOne({name : user})
+        console.log(newUser)
+        if(!newUser) {
+            res.sendStatus(404)
+			return;
+        }
+
+        await db.collection("participants").updateOne({ 
+			name: newUser.name
+		}, { $set:{"lastStatus": Date.now()}})
+        res.sendStatus(200)
+    } catch(erro) {
+        res.sendStatus(500);
+    }
+})
 app.listen(5000, () => {
     console.log('API está no ar!');
   });
