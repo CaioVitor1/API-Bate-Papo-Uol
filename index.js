@@ -113,7 +113,8 @@ console.log(user)
 app.get('/messages', async(req,res) => {
     const limit = parseInt(req.query.limit);
     const user = req.headers.user;
-    const messagesPublic = await db.collection('message').find({$or: [{type: "message"}, {type: "status"}, {to: user}, {from: user}]}).limit(limit).toArray();
+    const everyMessage = await db.collection('message').find({$or: [{type: "message"}, {type: "status"}, {to: user}, {from: user}]}).toArray();
+    const messagesPublic = everyMessage.slice(-limit)
     try{
         res.send(messagesPublic)
     } catch(erro){
