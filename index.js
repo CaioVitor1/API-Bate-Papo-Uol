@@ -40,7 +40,7 @@ async function updateParticipants() {
         }	
 
 	} catch (erro) {
-	  res.status(500).send('A culpa foi do estagiário')
+        res.sendStatus(500)
 	}    
 }
 
@@ -87,16 +87,22 @@ app.get('/participants', async(req, res) => {
 app.post('/messages', async(req,res) => {
     const {to, text, type} = req.body
     const {user} = req.headers
-
+console.log(user)
     const validation = messagesSchema.validate(req.body, {abortEarly: true})
     if(validation.error){
         res.sendStatus(422);
         return;
     }
-/*Verificar se ainda existe usuário com esse nome presente */
-    const newUser = await db.collection("participants").find({name : user}).toArray();
+
 
     try{
+        const newUser = await db.collection("participants").findOne({name : user})
+        console.log(newUser)
+        if(!newUser) {
+            res.sendStatus(404)
+            console.log("participante não está presente")
+			return;
+        }
         await db.collection('message').insertOne({from: user, to: to, text: text, type: type, time: time})
         res.sendStatus(201);
     } catch(erro) {
