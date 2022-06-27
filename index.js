@@ -26,11 +26,25 @@ const messagesSchema = joi.object({
     text : joi.string().min(1).required(),
     type : joi.string().valid('message','private_message').required()
 })
-/*const userSchema = joi.object({
-    to : joi.
-})*/
 
+async function updateParticipants() {
+    try {
+	    const participants = await db.collection('participants').find().toArray();
+		for(let i=0;i<participants.length;i++){
+            if((Date.now()-participants[i].lastStatus)>=10000){
+                const message= {from: participants[i].name, to: 'Todos', text: 'sai da sala...', type: 'status', time: dayjs().format("HH:mm:ss")};
+                await db.collection('message').insertOne(message);
+                await db.collection('participants').deleteOne(participants[i]);
+                
+            }
+        }	
 
+	} catch (erro) {
+	  res.status(500).send('A culpa foi do estagiário')
+	}    
+}
+
+setInterval(updateParticipants, 15000);
 
 app.post('/participants', async (req, res) => {
     function verificandoNome(valor) {
@@ -40,7 +54,6 @@ app.post('/participants', async (req, res) => {
         }
     }
     const {name} = req.body;
-    console.log(name)
     const promise = db.collection("participants").find({name}).toArray();
       promise.then((valor) => verificandoNome(valor));
 
@@ -94,7 +107,7 @@ app.post('/messages', async(req,res) => {
 app.get('/messages', async(req,res) => {
     const limit = parseInt(req.query.limit);
     const user = req.headers.user;
-    const messagesPublic = await db.collection('message').find({to: { $in: [ "Todos", user ] }}).limit(limit).toArray();
+    const messagesPublic = await db.collection('message').find({$or: [{type: "message"}, {type: "status"}, {to: user}, {from: user}]}).limit(limit).toArray();
     try{
         res.send(messagesPublic)
     } catch(erro){
